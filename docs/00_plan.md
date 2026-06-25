@@ -55,30 +55,51 @@ channels/embedding).
 Build bottom-up; each step has working code, a test, a doc page, and a diagram. Check off
 as you go.
 
-- [ ] **Step 0 — Project setup.** Add PyTorch (CUDA) to `pyproject.toml`, create
+- [x] **Step 0 — Project setup.** Add PyTorch (CUDA) to `pyproject.toml`, create
   `src/nanogpt/` package, `config.py` with a `GPTConfig` dataclass, device auto-detect.
-- [ ] **Step 1 — Data pipeline.** `scripts/prepare_data.py` downloads Tiny Shakespeare;
-  `data.py` does char↔int mapping, train/val split, and random batch sampling. → doc 02/03
-- [ ] **Step 2 — Tokenizer.** `tokenizer.py`: build vocab, `encode`/`decode`. → doc 03
-- [ ] **Step 3 — Embeddings.** `embeddings.py`: token embedding table (B,T)→(B,T,C). → doc 04
-- [ ] **Step 4 — Positional encoding.** `positional_encoding.py`: sinusoidal (+ learned
+  ✅ torch 2.6.0+cu124 on RTX 4070 (sm_89); 5/5 config tests pass.
+- [x] **Step 1 — Data pipeline.** `scripts/prepare_data.py` downloads Tiny Shakespeare;
+  `data.py` does train/val split and random batch sampling. → doc 02
+  ✅ 1.1 M chars downloaded; `TextData.get_batch` verified (y = x shifted by 1) on GPU.
+- [x] **Step 2 — Tokenizer.** `tokenizer.py`: build vocab (65 chars), `encode`/`decode`,
+  save/load. → doc 03 ✅ lossless round-trip tested.
+- [x] **Step 3 — Embeddings.** `embeddings.py`: token embedding table (B,T)→(B,T,C). → doc 04
+  ✅ shape/one-hot-equivalence/sparse-gradient tests pass; doc 04 written.
+- [x] **Step 4 — Positional encoding.** `positional_encoding.py`: sinusoidal (+ learned
   option), the math of why sin/cos. → doc 05
-- [ ] **Step 5 — Self-attention (single head).** `attention.py`: Q,K,V, scaled dot-product,
+  ✅ formula-match + no-params + factory tests pass; doc 05 (incl. rotation/relative-pos
+  derivation) written; matches the web widget.
+- [x] **Step 5 — Self-attention (single head).** `attention.py`: Q,K,V, scaled dot-product,
   causal mask, softmax. The heart of the model. → doc 06
-- [ ] **Step 6 — Multi-head attention.** `multi_head_attention.py`: parallel heads, concat,
+  ✅ causality, row-sum-1, mask, gradient tests pass; doc 06 (√d variance + softmax Jacobian)
+  written. `Head` can return weights for the upcoming attention widget.
+- [x] **Step 6 — Multi-head attention.** `multi_head_attention.py`: parallel heads, concat,
   output projection. → doc 07
-- [ ] **Step 7 — Feed-forward network.** `feed_forward.py`: position-wise MLP (4× expansion,
+  ✅ shape-preserved, head-count/size, per-head causality, indivisible-dims tests pass; doc 07
+  written (incl. why splitting costs no extra params).
+- [x] **Step 7 — Feed-forward network.** `feed_forward.py`: position-wise MLP (4× expansion,
   GELU). → doc 08
-- [ ] **Step 8 — LayerNorm + residuals.** `layer_norm.py`: hand-written LayerNorm; explain
+  ✅ shape, 4x-hidden, position-wise, non-linearity, gradient tests pass; doc 08 written.
+- [x] **Step 8 — LayerNorm + residuals.** `layer_norm.py`: hand-written LayerNorm; explain
   pre-LN vs post-LN and why residual connections help gradients. → doc 09
-- [ ] **Step 9 — Transformer block.** `block.py`: assemble attention + FFN with pre-LN and
+  ✅ matches torch.nn.LayerNorm; zero-mean/unit-var + gradient tests pass; doc 09 (residual
+  +I highway, LN backward formula) written.
+- [x] **Step 9 — Transformer block.** `block.py`: assemble attention + FFN with pre-LN and
   residuals (the repeated Nx unit). → doc 10
-- [ ] **Step 10 — GPT model.** `model.py`: embeddings + positions + N blocks + final
+  ✅ shape, causality-through-block, all-subcomponent gradients, residual-identity tests pass;
+  doc 10 written.
+- [x] **Step 10 — GPT model.** `model.py`: embeddings + positions + N blocks + final
   LayerNorm + LM head; the forward pass and the loss (cross-entropy). → doc 11
-- [ ] **Step 11 — Training loop.** `train.py`: `GPTConfig`, AdamW, train/val loss eval,
+  ✅ 10.67 M params; init loss 4.30 ≈ ln(65); weight tying, generate, return-weights tests
+  pass; live GPU forward + untrained sample verified; doc 11 written.
+- [x] **Step 11 — Training loop.** `train.py`: `GPTConfig`, AdamW, train/val loss eval,
   checkpoint save/load, logging. → doc 12
-- [ ] **Step 12 — Sampling / generation.** `generate.py`: autoregressive sampling with
+  ✅ decay-group split, estimate_loss, loss-decreases, checkpoint-loadable tests pass;
+  doc 12 written. Run: `uv run python -m nanogpt.train`.
+- [x] **Step 12 — Sampling / generation.** `generate.py`: autoregressive sampling with
   temperature and top-k; load a checkpoint and print text. → doc 13
+  ✅ checkpoint load, prompt-prefix, in-vocab, temp/top-k variants tests pass; doc 13 written.
+  Run: `uv run python -m nanogpt.generate --prompt "ROMEO:" --tokens 500`.
 - [ ] **Step 13 — Polish.** Loss-curve plot (matplotlib/seaborn already installed), README
   results section, final pass over docs and diagrams.
 
@@ -93,3 +114,10 @@ A component is "done" when:
 ## Diagrams to draw (Excalidraw)
 
 See [assets/README.md](assets/README.md) for the naming convention and the full checklist.
+
+## Parallel track — interactive web visualizer
+
+Alongside the model, an interactive site in `web/` (vanilla JS + D3, static, GitHub Pages)
+gives each component a live widget. Build a widget when its component is done. The
+positional-encoding widget is already built as the proof of concept. See
+[14_web_visualizer.md](14_web_visualizer.md).

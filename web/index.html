@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>nanoGPT — Interactive Transformer Visualizer</title>
+  <link rel="stylesheet" href="styles.css" />
+  <!-- D3 from CDN: nothing to build or bundle -->
+  <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <h1>nanoGPT · Interactive Transformer</h1>
+    <p>See and play with each component. <strong>Drawing → math → live interactive.</strong></p>
+  </header>
+
+  <div class="layout">
+    <nav id="nav" class="sidebar" aria-label="Components">
+      <!-- populated by app.js -->
+    </nav>
+
+    <main class="content">
+      <section id="widget-root" class="widget-root">
+        <!-- selected widget renders here -->
+      </section>
+    </main>
+  </div>
+
+  <footer class="site-footer">
+    <span>Built for learning · illustrative numbers (real model later)</span>
+  </footer>
+
+  <!-- Widgets self-register into window.NanoGPTWidgets. Load _util first, then app.js last. -->
+  <script src="widgets/_util.js"></script>
+  <script src="widgets/03_tokenization.js"></script>
+  <script src="widgets/04_embeddings.js"></script>
+  <script src="widgets/05_positional_encoding.js"></script>
+  <script src="widgets/06_self_attention.js"></script>
+  <script src="widgets/07_multi_head_attention.js"></script>
+  <script src="widgets/08_feed_forward.js"></script>
+  <script src="widgets/09_layernorm_residual.js"></script>
+  <script src="widgets/10_transformer_block.js"></script>
+  <script src="widgets/11_gpt_model.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

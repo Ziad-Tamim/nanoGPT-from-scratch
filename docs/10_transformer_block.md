@@ -1,32 +1,65 @@
 # 10 — Transformer Block (the Nx unit)
 
 > **Code:** `src/nanogpt/block.py` · **Diagram:** `assets/10_transformer_block.png`
-> **Status:** stub — fill in during Step 9.
 
 ## Intuition
 
-The repeated unit (the `Nx` box in the diagram). It interleaves **communication**
-(attention — tokens talk) and **computation** (feed-forward — each token thinks), each wrapped
-in pre-LN + residual. Stacking `n_layer` of these builds depth.
+This is the unit repeated `n_layer` times — the `Nx` box in the architecture diagram. It
+combines the two complementary operations we've built:
+
+1. **Communication** — multi-head self-attention (doc 07): tokens look at each other and
+   exchange information.
+2. **Computation** — the position-wise feed-forward network (doc 08): each token independently
+   transforms what it gathered.
+
+Each is wrapped in **pre-LayerNorm** (doc 09) and a **residual** connection. Stacking blocks
+lets the model alternate "gather context" and "process it" many times, building increasingly
+abstract representations with depth.
 
 ## Math / mechanics (pre-LN)
 
-```
-x = x + MultiHeadAttention( LayerNorm(x) )
-x = x + FeedForward(        LayerNorm(x) )
-```
+$$
+\begin{aligned}
+x &\leftarrow x + \mathrm{MHA}\big(\mathrm{LN}_1(x)\big) \\
+x &\leftarrow x + \mathrm{FFN}\big(\mathrm{LN}_2(x)\big)
+\end{aligned}
+$$
 
-Two sublayers, two LayerNorms, two residual adds. Shape preserved end to end.
+Two sublayers, two LayerNorms, two residual adds. Crucially the LayerNorm is applied to the
+input *of* each sublayer, while the residual `x` flows through untouched — so the gradient
+highway from doc 09 runs cleanly through every block.
+
+The block is **shape-preserving**: `(B, T, C) → (B, T, C)`. That invariance is what lets us
+stack an arbitrary number of them.
+
+## Why attention first, then FFN
+
+Attention enriches each token with context from the rest of the sequence; the FFN then does
+the heavier non-linear processing on that enriched vector. The order matters less than the
+fact that both sit on residual branches, so neither can disrupt the identity path (verified in
+`test_residual_path_present`: zero both sublayer outputs and the block becomes the identity).
 
 ## Shapes
 
-`(B, T, C)` → `(B, T, C)`.
+| Tensor | Shape |
+|---|---|
+| input / output | `(B, T, C)` |
+| attention weights (viz) | `(B, n_head, T, T)` |
 
-## Why this order
+## Backprop note
 
-Attention first lets each token gather context; the FFN then transforms the enriched
-representation. Both on residual branches so the identity path is never disturbed (see doc 09).
+Because of the two residual adds, the block's input gradient is
+
+$$
+\frac{\partial L}{\partial x} =
+\frac{\partial L}{\partial x_{\text{out}}}\Big( I + \tfrac{\partial \mathrm{FFN}\circ\mathrm{LN}_2}{\partial \cdot}\Big)\Big( I + \tfrac{\partial \mathrm{MHA}\circ\mathrm{LN}_1}{\partial \cdot}\Big),
+$$
+
+i.e. an `I + (small)` factor per sublayer. Stacked over `n_layer` blocks this is a product of
+near-identity terms, so gradients neither vanish nor explode through depth. Causality is
+preserved by the whole block (`test_causality_survives_full_block`).
 
 ## References
 
-- Vaswani et al. (2017), Figure 1; Radford et al. (2019), GPT-2.
+- Vaswani et al. (2017), Figure 1.
+- Radford et al. (2019), GPT-2 (pre-LN decoder block).

@@ -1,42 +1,66 @@
 # 07 — Multi-Head Attention
 
 > **Code:** `src/nanogpt/multi_head_attention.py` · **Diagram:** `assets/07_multi_head_attention.png`
-> **Status:** stub — fill in during Step 6.
 
 ## Intuition
 
-One attention head can only learn one "relationship pattern" at a time. Run `n_head` heads in
-parallel, each in a smaller subspace, so the model attends to different things at once (e.g.
-syntax vs. long-range reference), then combine them.
+A single attention head produces one set of weights — it can only emphasize *one* kind of
+relationship at a time (say, "attend to the previous word"). Language needs many at once:
+agreement with the subject, matching brackets, topic, position. **Multi-head attention** runs
+`n_head` independent heads in parallel, each in its own smaller subspace, so they can
+specialize, then combines their results.
 
 ## Math / mechanics
 
-- Split `C` into `n_head` heads of size `head_size = C / n_head`.
-- Each head runs scaled dot-product attention (doc 06) independently.
-- Concatenate the heads back to `(B, T, C)`, then a learnable output projection `Wo`.
+Split the model width `C` into `h = n_head` heads of size `d = C / h`. Head `i` has its own
+projections `W_Q^i, W_K^i, W_V^i ∈ ℝ^{C×d}` and runs scaled dot-product causal attention
+(doc 06):
 
-```
-head_i = Attention(x Wq_i, x Wk_i, x Wv_i)
-MHA(x) = Concat(head_1, …, head_h) Wo
-```
+$$
+\text{head}_i = \mathrm{Attention}_i(x) \in \mathbb{R}^{B\times T\times d}.
+$$
 
-Efficient implementation: one big projection to `3·C`, reshape to
-`(B, n_head, T, head_size)`, do batched attention, reshape back.
+Concatenate along the feature axis and apply a learned output projection `W_O ∈ ℝ^{C×C}`:
+
+$$
+\mathrm{MHA}(x) = \big[\text{head}_1 \,\Vert\, \cdots \,\Vert\, \text{head}_h\big]\,W_O
+\in \mathbb{R}^{B\times T\times C}.
+$$
+
+The concatenation restores width `C`; `W_O` lets the model **mix** information across heads
+before it re-enters the residual stream (doc 09). Dropout is applied after the projection.
+
+### Why split instead of one big head
+
+With `h` heads of size `C/h`, the total projection parameters are `3·C·(C/h)·h = 3C²` — the
+**same** as one full-width head. The split costs nothing in parameters but gives the model `h`
+separate attention patterns. Each head's `√d` scaling uses the *per-head* size `d = C/h`.
+
+## Implementation note
+
+We build `MultiHeadAttention` from a `ModuleList` of `Head` modules for readability. A fused
+implementation does all heads in one matmul by projecting to `3C`, reshaping to
+`(B, n_head, T, d)`, and batching the attention — identical math, faster on GPU. Worth doing
+as a later optimization once the concept is clear.
 
 ## Shapes
 
 | Tensor | Shape |
 |---|---|
-| per-head out | `(B, T, head_size)` |
-| concatenated | `(B, T, C)` |
-| after `Wo` | `(B, T, C)` |
+| `x` | `(B, T, C)` |
+| each `head_i` | `(B, T, C/h)` |
+| concat | `(B, T, C)` |
+| after `W_O` | `(B, T, C)` |
+| per-head weights (viz) | `(B, n_head, T, T)` |
 
 ## Backprop note
 
-Heads are independent paths that sum their gradient contributions at the shared input `x`;
-`Wo` mixes them. Total params are similar to a single full-width head, but the split lets
-each subspace specialize.
+The heads are independent computational paths that **sum** their gradient contributions at
+the shared input `x` (because each reads the same `x`). `W_O` receives gradient from the
+concatenated head outputs and routes it back to the appropriate head slices. Causality is
+preserved per head (tested in `test_each_head_is_causal` and end-to-end in
+`test_causality_preserved_end_to_end`).
 
 ## References
 
-- Vaswani et al. (2017), §3.2.2.
+- Vaswani et al. (2017), §3.2.2 (Multi-Head Attention).

@@ -14,3 +14,6 @@ data/
 checkpoints/
 *.pt
 *.ckpt
+
+# Weights & Biases local run logs
+wandb/

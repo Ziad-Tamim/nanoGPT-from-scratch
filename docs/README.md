@@ -30,6 +30,12 @@ code reference → diagram**. Diagrams live in [`assets/`](assets/).
 | 12 | [12_training.md](12_training.md) | `src/nanogpt/train.py` | `assets/12_training.png` |
 | 13 | [13_sampling.md](13_sampling.md) | `src/nanogpt/generate.py` | `assets/13_sampling.png` |
 
+## Interactive site
+
+| Doc | What's inside |
+|---|---|
+| [14_web_visualizer.md](14_web_visualizer.md) | The `web/` interactive visualizer: structure, how widgets are wired, GitHub Pages hosting. First widget (positional encoding) is live. |
+
 ## Background
 
 The starting-point diagram (RNN → Transformer) is [`assets/00_rnn_vs_transformer.png`](assets/00_rnn_vs_transformer.png),
