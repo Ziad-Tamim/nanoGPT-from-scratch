@@ -20,7 +20,8 @@ Keep a matching `NN_component_name.excalidraw` source if you want it editable la
 
 ## Checklist
 
-- [x] `00_rnn_vs_transformer.png` — background: RNN problems → Transformer overview (already drawn)
+- [ ] `00_rnn.png` — background: the RNN and its problems (slow, vanishing gradients, long-range)
+- [ ] `01_transformer_architecture.png` — the full Transformer architecture (the encoder–decoder figure / decoder-only stack)
 - [ ] `02_dataset_batching.png` — sliding window: inputs `x` and shifted targets `y`
 - [ ] `03_tokenization.png` — char ↔ int mapping (stoi / itos)
 - [ ] `04_embeddings.png` — token id → embedding vector (lookup table)

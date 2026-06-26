@@ -3,7 +3,7 @@
 ## Decoder-only GPT {#decoder-only}
 
 The original *Attention Is All You Need* diagram (see
-[`assets/00_rnn_vs_transformer.png`](assets/00_rnn_vs_transformer.png)) shows an
+[`assets/01_transformer_architecture.png`](assets/01_transformer_architecture.png)) shows an
 **encoder–decoder** model built for translation. GPT keeps only the **right-hand
 (decoder) stack**, and drops the cross-attention that pointed at the encoder. What remains:
 

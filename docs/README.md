@@ -34,12 +34,13 @@ code reference → diagram**. Diagrams live in [`assets/`](assets/).
 
 | Doc | What's inside |
 |---|---|
-| [14_web_visualizer.md](14_web_visualizer.md) | The `web/` interactive visualizer: structure, how widgets are wired, GitHub Pages hosting. First widget (positional encoding) is live. |
+| [14_web_visualizer.md](14_web_visualizer.md) | The `web/` interactive visualizer: structure, how widgets are wired, GitHub Pages hosting. All nine component widgets (03–11) are live. |
 
 ## Background
 
-The starting-point diagram (RNN → Transformer) is [`assets/00_rnn_vs_transformer.png`](assets/00_rnn_vs_transformer.png),
-discussed in [01_architecture.md](01_architecture.md).
+The starting-point diagrams are [`assets/00_rnn.png`](assets/00_rnn.png) (the RNN and its
+limitations) and [`assets/01_transformer_architecture.png`](assets/01_transformer_architecture.png)
+(the full Transformer), discussed in [01_architecture.md](01_architecture.md).
 
 > **Note on the original diagram:** the classic *Attention Is All You Need* figure shows an
 > **encoder–decoder** model. We build the **decoder-only** variant (GPT) — the right-hand
